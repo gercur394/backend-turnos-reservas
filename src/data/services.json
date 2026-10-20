@@ -1,0 +1,38 @@
+[
+  {
+    "id": 1,
+    "name": "Corte de pelo",
+    "description": "Corte clásico para adultos con lavado incluido",
+    "duration": 30,
+    "price": 8000,
+    "category": "Peluquería",
+    "available": true
+  },
+  {
+    "id": 2,
+    "name": "Coloración",
+    "description": "Tintura completa con productos profesionales",
+    "duration": 90,
+    "price": 25000,
+    "category": "Peluquería",
+    "available": true
+  },
+  {
+    "id": 3,
+    "name": "Manicura",
+    "description": "Limado, cutículas y esmaltado tradicional",
+    "duration": 45,
+    "price": 9000,
+    "category": "Uñas",
+    "available": true
+  },
+  {
+    "id": 4,
+    "name": "Masaje descontracturante",
+    "description": "Masaje localizado en espalda y cuello",
+    "duration": 60,
+    "price": 18000,
+    "category": "Spa",
+    "available": false
+  }
+]
