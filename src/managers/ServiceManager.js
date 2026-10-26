@@ -24,8 +24,25 @@ class ServiceManager {
   }
 
   
-  async getServices() {
-    return await this._read();
+    // Devuelve los servicios. Acepta filtros opcionales: { category, available }.
+  // El "= {}" hace que siga funcionando igual si se lo llama sin argumentos.
+  async getServices(filters = {}) {
+    let services = await this._read();
+
+    if (filters.category) {
+      services = services.filter(
+        (s) => s.category.toLowerCase() === filters.category.toLowerCase()
+      );
+    }
+
+    
+    if (filters.available) {
+      services = services.filter(
+        (s) => String(s.available) === filters.available.toLowerCase()
+      );
+    }
+
+    return services;
   }
 
   

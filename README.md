@@ -1,6 +1,6 @@
 # Backend Turnos y Reservas
 
-Administrador de servicios para un sistema de turnos y reservas, construido con Node.js (ESM). Incluye una clase `ServiceManager` que gestiona los servicios guardándolos en un archivo JSON.
+API REST para gestionar los servicios de un sistema de turnos y reservas. Construida con Node.js (ESM) y Express. La lógica de los servicios vive en la clase `ServiceManager`, que guarda los datos en un archivo JSON, y los endpoints se organizan en un router de Express.
 
 ## Instalación
 
@@ -19,18 +19,36 @@ npm install
 npm start
 ```
 
+Para desarrollo, con reinicio automático al guardar cambios:
+
+```bash
+npm run dev
+```
+
+El servidor queda disponible en `http://localhost:8080` (o en el puerto configurado en `.env`).
+
 ## Variables de entorno
 
-| Variable   | Descripción                              | Ejemplo       |
-|------------|------------------------------------------|---------------|
-| `PORT`     | Puerto de la aplicación                  | `8080`        |
-| `NODE_ENV` | Entorno de ejecución                     | `development` |
+| Variable   | Descripción              | Ejemplo       |
+|------------|--------------------------|---------------|
+| `PORT`     | Puerto del servidor      | `8080`        |
+| `NODE_ENV` | Entorno de ejecución     | `development` |
 
 Si falta alguna, la aplicación no inicia y muestra un mensaje indicando cuáles faltan.
 
-## Recurso `services`
+## Estructura del proyecto
 
-Cada servicio tiene la siguiente forma:
+```
+src/
+  config/env.config.js       # Lectura y validación de variables de entorno
+  managers/ServiceManager.js # Lógica de los servicios
+  data/services.json         # Datos de los servicios
+  routes/services.router.js  # Endpoints de /api/services
+  app.js                     # Configuración de Express
+  server.js                  # Arranque del servidor
+```
+
+## Recurso `services`
 
 | Campo         | Tipo    | Descripción                               |
 |---------------|---------|-------------------------------------------|
@@ -42,34 +60,51 @@ Cada servicio tiene la siguiente forma:
 | `category`    | string  | Categoría                                 |
 | `available`   | boolean | Si el servicio está disponible            |
 
-Los datos se guardan en `src/data/services.json`.
+## Endpoints
 
-## Uso de `ServiceManager`
+| Método | Ruta                     | Descripción                                              | Respuestas        |
+|--------|--------------------------|----------------------------------------------------------|-------------------|
+| GET    | `/api/services`          | Lista los servicios. Acepta filtros por query params     | 200               |
+| GET    | `/api/services/:sid`     | Devuelve un servicio por id                              | 200, 404          |
+| POST   | `/api/services`          | Crea un servicio con los datos del body                  | 201, 400          |
+| PUT    | `/api/services/:sid`     | Actualiza un servicio (el id no se puede modificar)      | 200, 404          |
+| DELETE | `/api/services/:sid`     | Elimina un servicio                                      | 200, 404          |
 
-```js
-import ServiceManager from './managers/ServiceManager.js';
+### Filtros en `GET /api/services`
 
-const manager = new ServiceManager();
+- `category`: filtra por categoría (no distingue mayúsculas). Ejemplo: `/api/services?category=spa`
+- `available`: filtra por disponibilidad (`true` o `false`). Ejemplo: `/api/services?available=true`
+- Se pueden combinar: `/api/services?category=peluquería&available=true`
 
-// Obtener todos los servicios
-await manager.getServices();
+### Ejemplo de body para `POST /api/services`
 
-// Obtener un servicio por id (devuelve null si no existe)
-await manager.getServiceById(2);
-
-// Agregar un servicio (el id se genera solo; lanza un error si faltan campos)
-await manager.addService({
-  name: 'Barba',
-  description: 'Perfilado y recorte de barba',
-  duration: 20,
-  price: 5000,
-  category: 'Peluquería',
-  available: true,
-});
-
-// Actualizar un servicio (el id no se puede modificar; devuelve null si no existe)
-await manager.updateService(2, { price: 27000 });
-
-// Eliminar un servicio (devuelve el servicio eliminado, o null si no existe)
-await manager.deleteService(2);
+```json
+{
+  "name": "Barba",
+  "description": "Perfilado y recorte de barba",
+  "duration": 20,
+  "price": 5000,
+  "category": "Peluquería",
+  "available": true
+}
 ```
+
+- El `id` se genera automáticamente: si se envía en el body, se ignora.
+- Si falta algún campo, responde `400` indicando cuáles faltan.
+
+### Ejemplo de body para `PUT /api/services/:sid`
+
+Se envían solo los campos a modificar:
+
+```json
+{
+  "price": 6000
+}
+```
+
+El `id` no se puede modificar: si se envía en el body, se ignora.
+
+### Archivo "pruebas.http"
+
+Se deja creado el archivo "pruebas.http" donde se dejan las pruebas realizadas de GET, POST, PUT y DELETE.
+Usando REST Client de VS Code.

@@ -1,0 +1,68 @@
+### 1. POST: crear un servicio completo (esperá 201)
+POST http://localhost:8080/api/services
+Content-Type: application/json
+
+{
+  "name": "Barba",
+  "description": "Perfilado y recorte de barba",
+  "duration": 20,
+  "price": 5000,
+  "category": "Peluquería",
+  "available": true
+}
+
+### 2. POST: body incompleto (esperá 400)
+POST http://localhost:8080/api/services
+Content-Type: application/json
+
+{
+  "name": "Solo nombre"
+}
+
+### 3. POST: mandando un id a propósito
+POST http://localhost:8080/api/services
+Content-Type: application/json
+
+{
+  "id": 999,
+  "name": "Prueba de id",
+  "description": "Servicio para probar el id",
+  "duration": 10,
+  "price": 1000,
+  "category": "Prueba",
+  "available": true
+}
+
+### 4. PUT: cambiar el precio (cambiá el 5 por el id que te haya tocado)
+PUT http://localhost:8080/api/services/5
+Content-Type: application/json
+
+{
+  "price": 6000
+}
+
+### 5. PUT: intentando cambiar el id
+PUT http://localhost:8080/api/services/5
+Content-Type: application/json
+
+{
+  "id": 999,
+  "price": 7000
+}
+
+### 6. PUT: servicio inexistente (esperá 404)
+PUT http://localhost:8080/api/services/99
+Content-Type: application/json
+
+{
+  "price": 1
+}
+
+### 7. DELETE: eliminar un servicio (cambiá el id según corresponda)
+DELETE http://localhost:8080/api/services/5
+
+### 8. DELETE: servicio inexistente (esperá 404)
+DELETE http://localhost:8080/api/services/99
+
+### 9. GET: ver cómo quedó la lista
+GET http://localhost:8080/api/services
