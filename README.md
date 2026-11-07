@@ -1,5 +1,7 @@
 # Backend Turnos y Reservas
 
+**Pre-entrega 3:** API inicial de servicios y reservas con FileSystem.
+
 API REST para gestionar los servicios y las reservas de un sistema de turnos. Construida con Node.js (ESM), Express y FileSystem: los datos se guardan en archivos JSON, por lo que no se pierden al reiniciar el servidor.
 
 La lógica de cada recurso vive en una clase manager (`ServiceManager` y `BookingManager`), y los endpoints se organizan en un router por recurso.
