@@ -1,0 +1,20 @@
+[
+  {
+    "id": 1,
+    "clientName": "Ana Pérez",
+    "clientEmail": "ana@mail.com",
+    "date": "2026-11-20",
+    "time": "15:30",
+    "status": "pending",
+    "services": []
+  },
+  {
+    "id": 2,
+    "clientName": "Luis Gómez",
+    "clientEmail": "luis@mail.com",
+    "date": "2026-11-21",
+    "time": "10:00",
+    "status": "confirmed",
+    "services": []
+  }
+]

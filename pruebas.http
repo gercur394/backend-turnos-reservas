@@ -66,3 +66,64 @@ DELETE http://localhost:8080/api/services/99
 
 ### 9. GET: ver cómo quedó la lista
 GET http://localhost:8080/api/services
+
+
+
+### Reserva: crear una reserva completa (esperá 201)
+POST http://localhost:8080/api/bookings
+Content-Type: application/json
+
+{
+  "clientName": "Ana Pérez",
+  "clientEmail": "ana@mail.com",
+  "date": "2026-11-20",
+  "time": "15:30"
+}
+
+### Reserva: incompleta (esperá 400)
+POST http://localhost:8080/api/bookings
+Content-Type: application/json
+
+{
+  "clientName": "Solo nombre"
+}
+
+### Reserva: mandando id y services a propósito
+POST http://localhost:8080/api/bookings
+Content-Type: application/json
+
+{
+  "id": 999,
+  "clientName": "Luis Gómez",
+  "clientEmail": "luis@mail.com",
+  "date": "2026-11-21",
+  "time": "10:00",
+  "status": "confirmed",
+  "services": [{ "service": 1, "quantity": 5 }]
+}
+
+### Reserva: buscar por id (esperá 200)
+GET http://localhost:8080/api/bookings/1
+
+### Reserva: id inexistente (esperá 404)
+GET http://localhost:8080/api/bookings/99
+
+
+
+### Agregar servicio 1 a la reserva 1 (esperá 200)
+POST http://localhost:8080/api/bookings/1/services/1
+
+### Agregar el MISMO servicio de nuevo
+POST http://localhost:8080/api/bookings/1/services/1
+
+### Agregar otro servicio distinto
+POST http://localhost:8080/api/bookings/1/services/3
+
+### Servicio inexistente (esperá 404)
+POST http://localhost:8080/api/bookings/1/services/99
+
+### Reserva inexistente (esperá 404)
+POST http://localhost:8080/api/bookings/99/services/1
+
+### Ver cómo quedó la reserva
+GET http://localhost:8080/api/bookings/1

@@ -1,6 +1,7 @@
 // Importamos Express, la librería que nos da el "mostrador"
 import express from 'express';
 import servicesRouter from './routes/services.router.js';
+import bookingsRouter from './routes/bookings.router.js';
 
 // Creamos la aplicación. "app" es el mostrador: acá se configuran las reglas
 // y, más adelante, se conectan las ventanillas (rutas).
@@ -15,6 +16,8 @@ app.use(express.json());
 // Montamos el router: todo lo que empiece con /api/services se atiende en él.
 // Va DESPUÉS del middleware y antes del export.
 app.use('/api/services', servicesRouter);
+
+app.use('/api/bookings', bookingsRouter);
 
 // Exportamos la app para que otros archivos puedan usarla.
 // Fijate que acá NO encendemos nada: solo dejamos el mostrador armado.
