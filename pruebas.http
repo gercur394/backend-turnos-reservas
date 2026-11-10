@@ -59,13 +59,14 @@ Content-Type: application/json
 }
 
 ### 7. DELETE: eliminar un servicio (cambiá el id según corresponda)
-DELETE http://localhost:8080/api/services/5
+DELETE http://localhost:8080/api/services/6
 
 ### 8. DELETE: servicio inexistente (esperá 404)
 DELETE http://localhost:8080/api/services/99
 
 ### 9. GET: ver cómo quedó la lista
 GET http://localhost:8080/api/services
+
 
 
 
