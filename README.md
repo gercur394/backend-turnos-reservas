@@ -1,10 +1,10 @@
 # Backend Turnos y Reservas
 
-**Pre-entrega 3:** API inicial de servicios y reservas con FileSystem.
+**Pre-entrega 4:** reorganización de la API en tres capas (routers, controllers y managers), sin cambios en los endpoints.
 
 API REST para gestionar los servicios y las reservas de un sistema de turnos. Construida con Node.js (ESM), Express y FileSystem: los datos se guardan en archivos JSON, por lo que no se pierden al reiniciar el servidor.
 
-La lógica de cada recurso vive en una clase manager (`ServiceManager` y `BookingManager`), y los endpoints se organizan en un router por recurso.
+La API está organizada en tres capas: los **routers** definen los endpoints, los **controllers** reciben la petición y arman la respuesta, y los **managers** manejan los datos guardados en los archivos JSON.
 
 ## Instalación
 
@@ -44,16 +44,28 @@ Si falta alguna, la aplicación no inicia y muestra un mensaje indicando cuáles
 
 ```
 src/
-  config/env.config.js         # Lectura y validación de variables de entorno
-  managers/ServiceManager.js   # Lógica de los servicios
-  managers/BookingManager.js   # Lógica de las reservas
-  data/services.json           # Persistencia de servicios
-  data/bookings.json           # Persistencia de reservas
-  routes/services.router.js    # Endpoints de /api/services
-  routes/bookings.router.js    # Endpoints de /api/bookings
-  app.js                       # Configuración de Express
-  server.js                    # Arranque del servidor
+  config/env.config.js              # Lectura y validación de variables de entorno
+  controllers/services.controller.js # Controllers de services
+  controllers/bookings.controller.js # Controllers de bookings
+  managers/ServiceManager.js        # Lógica y datos de los servicios
+  managers/BookingManager.js        # Lógica y datos de las reservas
+  routes/services.router.js         # Endpoints de /api/services
+  routes/bookings.router.js         # Endpoints de /api/bookings
+  data/services.json                # Persistencia de servicios
+  data/bookings.json                # Persistencia de reservas
+  app.js                            # Configuración de Express
+  server.js                         # Arranque del servidor
 ```
+
+## Arquitectura en capas
+
+| Capa        | Responsabilidad                                                                              |
+|-------------|----------------------------------------------------------------------------------------------|
+| Router      | Define los endpoints y los conecta con su controller. No contiene lógica.                    |
+| Controller  | Lee `req.params`, `req.query` y `req.body`, llama al manager y responde con `res.status().json()`. |
+| Manager     | Maneja los datos y la lógica sobre los archivos JSON. No usa `req` ni `res`.                 |
+
+En `POST /api/bookings/:bid/services/:sid`, el controller valida que existan la reserva y el servicio (consultando a `BookingManager` y `ServiceManager`) antes de agregar el servicio a la reserva.
 
 ## Recurso `services`
 
