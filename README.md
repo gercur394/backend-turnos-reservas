@@ -1,10 +1,8 @@
 # Backend Turnos y Reservas
 
-**Pre-entrega 4:** reorganización de la API en tres capas (routers, controllers y managers), sin cambios en los endpoints.
+**Pre-entrega 5:** refactor de la API con arquitectura en capas (routers, controllers, services, repositories y DAO), sin cambios en los endpoints.
 
-API REST para gestionar los servicios y las reservas de un sistema de turnos. Construida con Node.js (ESM), Express y FileSystem: los datos se guardan en archivos JSON, por lo que no se pierden al reiniciar el servidor.
-
-La API está organizada en tres capas: los **routers** definen los endpoints, los **controllers** reciben la petición y arman la respuesta, y los **managers** manejan los datos guardados en los archivos JSON.
+La API está organizada en capas, cada una con una responsabilidad distinta: los **routers** definen los endpoints, los **controllers** manejan la petición y la respuesta, los **services** contienen las reglas de negocio, los **repositories** ofrecen el acceso a los datos y los **DAO** leen y escriben los archivos JSON.
 
 ## Instalación
 
@@ -43,41 +41,63 @@ Si falta alguna, la aplicación no inicia y muestra un mensaje indicando cuáles
 ## Estructura del proyecto
 
 ```
+
 src/
-  config/env.config.js              # Lectura y validación de variables de entorno
-  controllers/services.controller.js # Controllers de services
-  controllers/bookings.controller.js # Controllers de bookings
-  managers/ServiceManager.js        # Lógica y datos de los servicios
-  managers/BookingManager.js        # Lógica y datos de las reservas
-  routes/services.router.js         # Endpoints de /api/services
-  routes/bookings.router.js         # Endpoints de /api/bookings
-  data/services.json                # Persistencia de servicios
-  data/bookings.json                # Persistencia de reservas
-  app.js                            # Configuración de Express
-  server.js                         # Arranque del servidor
+  config/env.config.js                  # Lectura y validación de variables de entorno
+  routes/services.router.js             # Endpoints de /api/services
+  routes/bookings.router.js             # Endpoints de /api/bookings
+  controllers/services.controller.js    # Controllers de services
+  controllers/bookings.controller.js    # Controllers de bookings
+  services/services.service.js          # Reglas de negocio de services
+  services/bookings.service.js          # Reglas de negocio de bookings
+  repositories/services.repository.js   # Acceso a datos de services
+  repositories/bookings.repository.js   # Acceso a datos de bookings
+  dao/services.dao.js                   # Lectura/escritura de services.json
+  dao/bookings.dao.js                   # Lectura/escritura de bookings.json
+  data/services.json                    # Persistencia de servicios
+  data/bookings.json                    # Persistencia de reservas
+  app.js                                # Configuración de Express
+  server.js                             # Arranque del servidor
+
 ```
 
 ## Arquitectura en capas
 
-| Capa        | Responsabilidad                                                                              |
-|-------------|----------------------------------------------------------------------------------------------|
-| Router      | Define los endpoints y los conecta con su controller. No contiene lógica.                    |
-| Controller  | Lee `req.params`, `req.query` y `req.body`, llama al manager y responde con `res.status().json()`. |
-| Manager     | Maneja los datos y la lógica sobre los archivos JSON. No usa `req` ni `res`.                 |
+Cada petición recorre las capas en este orden:
 
-En `POST /api/bookings/:bid/services/:sid`, el controller valida que existan la reserva y el servicio (consultando a `BookingManager` y `ServiceManager`) antes de agregar el servicio a la reserva.
+```
+router → controller → service → repository → DAO → archivo JSON
+```
 
-## Recurso `services`
+| Capa       | Responsabilidad                                                                 | Lo que NO hace                       |
+|------------|---------------------------------------------------------------------------------|--------------------------------------|
+| Router     | Define los endpoints y los conecta con su controller                            | No contiene lógica                   |
+| Controller | Lee `req.params`, `req.query` y `req.body`, llama al service y responde con `res.status().json()` | No contiene reglas de negocio |
+| Service    | Contiene las reglas de negocio (validaciones, valores por defecto, filtros)     | No conoce `req`/`res` ni accede a archivos |
+| Repository | Ofrece métodos de acceso a datos (`getAll`, `getById`, `create`, `update`, `delete`) | No contiene reglas de negocio   |
+| DAO        | Lee y escribe directamente en el archivo JSON                                   | No contiene reglas de negocio        |
 
-| Campo         | Tipo    | Descripción                               |
-|---------------|---------|-------------------------------------------|
-| `id`          | number  | Identificador, generado automáticamente   |
-| `name`        | string  | Nombre del servicio                       |
-| `description` | string  | Descripción del servicio                  |
-| `duration`    | number  | Duración en minutos                       |
-| `price`       | number  | Precio                                    |
-| `category`    | string  | Categoría                                 |
-| `available`   | boolean | Si el servicio está disponible            |
+### Ejemplo: agregar un servicio a una reserva
+
+`POST /api/bookings/:bid/services/:sid`
+
+1. El **router** deriva el pedido a `addServiceToBooking` del controller.
+2. El **controller** lee `bid` y `sid` de `req.params` y llama al service.
+3. El **service** comprueba que existan la reserva y el servicio, y aplica la regla de negocio: si el servicio ya estaba en la reserva, incrementa su `quantity`; si no, lo agrega con cantidad 1.
+4. El **repository** recibe el pedido de guardar la reserva actualizada y se lo pasa al DAO.
+5. El **DAO** escribe el resultado en `bookings.json`.
+
+### Manejo de resultados y errores
+
+Los services no conocen HTTP: avisan lo que pasó y el controller lo traduce a un código de estado.
+
+- Si algo no existe, el service devuelve `null` (o lanza un error con el código `NOT_FOUND`) y el controller responde `404`.
+- Si el pedido es inválido (por ejemplo, faltan campos), el service lanza un error y el controller responde `400`.
+
+### Por qué esta organización
+
+Separar el acceso a los datos (repository y DAO) de las reglas de negocio (service) permite cambiar la forma de persistencia, por ejemplo pasar de archivos JSON a una base de datos, modificando solo el DAO, sin tocar las capas superiores.
+
 
 ### Endpoints de services
 

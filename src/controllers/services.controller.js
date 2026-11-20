@@ -1,10 +1,10 @@
-import ServiceManager from '../managers/ServiceManager.js';
+import ServicesService from "../services/services.service.js";
 
-const serviceManager = new ServiceManager();
+const servicesService = new ServicesService();
 
 // GET /api/services
 export const getServices = async (req, res) => {
-  const services = await serviceManager.getServices(req.query);
+  const services = await servicesService.getServices(req.query);
   res.status(200).json(services);
 };
 
@@ -12,7 +12,7 @@ export const getServices = async (req, res) => {
 // GET /api/services/:sid 
 export const getServiceById = async (req, res) => {
   const { sid } = req.params;
-  const service = await serviceManager.getServiceById(sid);
+  const service = await servicesService.getServiceById(sid);
 
   if (!service) {
     return res.status(404).json({ error: `Servicio con id ${sid} no encontrado` });
@@ -25,7 +25,7 @@ export const getServiceById = async (req, res) => {
 // POST /api/services
 export const createService = async (req, res) => {
   try {
-    const newService = await serviceManager.addService(req.body);
+    const newService = await servicesService.createService(req.body);
 
     res.status(201).json(newService);
   } catch (error) {
@@ -37,7 +37,7 @@ export const createService = async (req, res) => {
 //PUT /api/services/:sid   
 export const updateService = async (req, res) => {
   const { sid } = req.params; 
-  const updated = await serviceManager.updateService(sid, req.body);
+  const updated = await servicesService.updateService(sid, req.body);
 
   if (!updated) {
     return res.status(404).json({ error: `Servicio con id ${sid} no encontrado` });
@@ -51,7 +51,7 @@ export const updateService = async (req, res) => {
 //DELETE /api/services/:sid  
 export const deleteService = async (req, res) => {
   const { sid } = req.params;
-  const deleted = await serviceManager.deleteService(sid);
+  const deleted = await servicesService.deleteService(sid);
 
   if (!deleted) {
     return res.status(404).json({ error: `Servicio con id ${sid} no encontrado` });
