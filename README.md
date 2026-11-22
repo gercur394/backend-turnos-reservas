@@ -83,13 +83,15 @@ Cada petición recorre las capas en este orden:
 router → controller → service → repository → DAO → MongoDB
 ```
 
-| Capa       | Responsabilida                   | Lo que NO hace                             |
-|------------|--------------------------------------------------------------------------------------------------|--------------------------------------------|
-| Router     | Define los endpoints y los conecta con su controller                                             | No contiene lógica                         |
-| Controller | Lee `req.params`, `req.query` y `req.body`, llama al service y responde con `res.status().json()` | No contiene reglas de negocio              |
-| Service    | Contiene las reglas de negocio (validaciones, valores por defecto, filtros, regla de `quantity`) | No conoce `req`/`res` ni accede a la base  |
-| Repository | Ofrece métodos de acceso a datos                                                                 | No contiene reglas de negocio              |
-| DAO        | Lee y escribe en MongoDB mediante los modelos de Mongoose                                        | No contiene reglas de negocio              |
+| Capa | Responsabilidad | No hace |
+|---|---|---|
+| Router | Define los endpoints y los conecta con su controller | Lógica |
+| Controller | Lee `req`, llama al service y responde con `res` | Reglas de negocio |
+| Service | Reglas de negocio: validaciones, valores por defecto, filtros y regla de `quantity` | Usar `req`/`res` ni acceder a la base |
+| Repository | Métodos de acceso a datos | Reglas de negocio |
+| DAO | Lee y escribe en MongoDB mediante los modelos de Mongoose | Reglas de negocio |
+
+El controller lee `req.params`, `req.query` y `req.body`, y responde con `res.status().json()`.
 
 ### Persistencia con MongoDB
 
@@ -164,15 +166,23 @@ Detalles:
 
 ## Recurso `bookings`
 
-| Campo         | Tipo     | Descripción                                                                                                                                                  |
-|---------------|----------|--------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `_id`         | ObjectId | Identificador generado por MongoDB                                                                                                                           |
-| `clientName`  | string   | Nombre del cliente                                                                                                                                           |
-| `clientEmail` | string   | Email del cliente                                                                                                                                            |
-| `date`        | string   | Fecha de la reserva                                                                                                                                          |
-| `time`        | string   | Hora de la reserva                                                                                                                                           |
-| `status`      | string   | Estado de la reserva (por defecto `pending`)                                                                                                                 |
-| `services`    | array    | Lista de servicios de la reserva, con la forma `{ "service": ObjectId, "quantity": n }`. `service` es una referencia al `_id` del servicio, no una copia     |
+| Campo | Tipo | Descripción |
+|---|---|---|
+| `_id` | ObjectId | Identificador generado por MongoDB |
+| `clientName` | string | Nombre del cliente |
+| `clientEmail` | string | Email del cliente |
+| `date` | string | Fecha de la reserva |
+| `time` | string | Hora de la reserva |
+| `status` | string | Estado de la reserva (por defecto `pending`) |
+| `services` | array | Servicios de la reserva (ver detalle abajo) |
+
+Cada elemento de `services` tiene esta forma:
+
+```json
+{ "service": "ObjectId del servicio", "quantity": 1 }
+```
+
+`service` es una referencia al `_id` del servicio, no una copia de sus datos.
 
 ### Endpoints de bookings
 
