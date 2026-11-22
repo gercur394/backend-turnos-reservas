@@ -73,7 +73,8 @@ class ServicesService {
     // Esta desestructuración separa el campo "id" (que guardamos en _ignored y no usamos)
     // y junta todo lo demás en "changes". Así el id nunca llega al repository.
     // El "= {}" evita un error si alguien manda un PUT sin body.
-    const { id: _ignored, ...changes } = updatedData;
+    // Regla de negocio: el id NO se puede modificar ("id" ni "_id"). Se separan y se descartan.
+    const { id: _ignoredId, _id: _ignoredMongoId, ...changes } = updatedData;
 
     return await this.repository.update(id, changes);
   }

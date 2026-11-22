@@ -70,18 +70,19 @@ class BookingsService {
 
     // 3. REGLA DE NEGOCIO: si el servicio ya estaba en la reserva, no se duplica:
     //    se incrementa quantity. Si no estaba, se agrega con cantidad 1.
-    //    Usamos service.id (ya es un número) para comparar y guardar.
-    const item = booking.services.find((s) => s.service === service.id);
+    //    Los ids ahora son ObjectId: con === compararíamos objetos en memoria y casi
+    //    nunca daría verdadero. Los pasamos a texto para comparar su valor.
+    const item = booking.services.find((s) => String(s.service) === String(service._id));
 
     if (item) {
       item.quantity += 1;
     } else {
-      booking.services.push({ service: service.id, quantity: 1 });
+      booking.services.push({ service: service._id, quantity: 1 });
     }
 
-    // 4. Le pedimos al repository que guarde solo lo que cambió: la lista de servicios.
-    //    La lógica de la cantidad se queda acá; el DAO solo guarda el resultado.
-    return await this.repository.update(booking.id, { services: booking.services });
+    // 4. Guardamos solo lo que cambió: la lista de servicios.
+    //    El id de la reserva ahora es booking._id (antes era booking.id).
+    return await this.repository.update(booking._id, { services: booking.services });
   }
 }
 

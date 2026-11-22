@@ -5,6 +5,11 @@ import config from './config/env.config.js';
 // Importamos la aplicación ya armada
 import app from './app.js';
 
+import connectDB from './config/db.config.js';
+
+// Primero abrimos la conexión con la base y esperamos a que esté lista...
+await connectDB();
+
 // listen() abre la puerta del local: le dice a Node "empezá a escuchar
 // pedidos en este puerto". El puerto sale del .env a través de config,
 // por eso no escribimos 8080 a mano.

@@ -1,61 +1,37 @@
-import fs from 'node:fs/promises';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import mongoose from 'mongoose';
+import BookingModel from '../models/booking.model.js';
 
-// Ubicamos bookings.json (en ESM __dirname no existe, hay que reconstruirlo)
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DEFAULT_FILE = path.join(__dirname, '../data/bookings.json');
-
-// Igual que el DAO de services: el único que sabe que los datos viven en un JSON.
-// Sin validaciones ni reglas de negocio.
+// El DAO de reservas: el único que sabe CÓMO se guardan los datos (ahora en MongoDB).
+// Sin reglas de negocio: guarda lo que le pasan.
 class BookingsDAO {
-  constructor(filePath = DEFAULT_FILE) {
-    this.filePath = filePath;
-  }
-
-  // Auxiliar: abre el archivo y lo convierte de texto a lista de objetos
-  async _read() {
-    const content = await fs.readFile(this.filePath, 'utf-8');
-    return JSON.parse(content);
-  }
-
-  // Auxiliar: guarda la lista completa en el archivo
-  async _write(bookings) {
-    await fs.writeFile(this.filePath, JSON.stringify(bookings, null, 2));
-  }
-
   // Guarda una reserva nueva y devuelve la reserva creada.
-  // El id lo genera el DAO (detalle de cómo se guarda): el mayor + 1, o 1 si está vacío.
+  // El _id lo genera MongoDB.
   async create(data) {
-    const bookings = await this._read();
-
-    const nextId = bookings.length > 0 ? Math.max(...bookings.map((b) => b.id)) + 1 : 1;
-    const newBooking = { id: nextId, ...data };
-
-    bookings.push(newBooking);
-    await this._write(bookings);
-    return newBooking;
+    const created = await BookingModel.create(data);
+    return created.toObject(); // de documento de Mongoose a objeto simple
   }
 
-  // Devuelve la reserva con ese id, o null si no existe
+  // Devuelve la reserva con ese id, o null si no existe.
   async getById(id) {
-    const bookings = await this._read();
-    const booking = bookings.find((b) => b.id === Number(id));
+    // Un id sin forma de ObjectId (por ejemplo "abc") haría que Mongoose lance un error.
+    // Lo tratamos como "no existe" para seguir respondiendo 404.
+    if (!mongoose.isValidObjectId(id)) return null;
+
+    const booking = await BookingModel.findById(id).lean();
     return booking ?? null;
   }
 
-  // Actualiza una reserva mezclando lo viejo con lo nuevo.
-  // Devuelve la reserva actualizada, o null si no existe.
+  // Actualiza una reserva con los datos recibidos y devuelve la reserva ya actualizada,
+  // o null si no existe.
   async update(id, data) {
-    const bookings = await this._read();
-    const index = bookings.findIndex((b) => b.id === Number(id));
+    if (!mongoose.isValidObjectId(id)) return null;
 
-    if (index === -1) return null;
+    const updated = await BookingModel.findByIdAndUpdate(id, data, {
+      new: true, // devuelve el documento YA actualizado
+      runValidators: true, // aplica las reglas del schema también al actualizar
+    }).lean();
 
-    bookings[index] = { ...bookings[index], ...data };
-
-    await this._write(bookings);
-    return bookings[index];
+    return updated ?? null;
   }
 }
 

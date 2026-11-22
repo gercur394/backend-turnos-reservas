@@ -1,88 +1,64 @@
-import fs from 'node:fs/promises';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import mongoose from 'mongoose';
+import ServiceModel from '../models/service.model.js';
 
-// Ubicamos services.json. En ESM no existe __dirname, así que lo reconstruimos
-// para que el archivo se encuentre sin importar desde qué carpeta se ejecute el proyecto.
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DEFAULT_FILE = path.join(__dirname, '../data/services.json');
-
-// El DAO es el único que sabe que los datos viven en un archivo JSON.
-// Su trabajo es mecánico: leer, modificar la lista y guardar.
-// NO valida, NO decide, NO tiene reglas de negocio: confía en lo que le llega.
+// El DAO sigue siendo el único que sabe CÓMO se guardan los datos.
+// Antes abría un archivo JSON; ahora le pide las cosas al modelo de Mongoose.
+// Sigue sin tener reglas de negocio.
 class ServicesDAO {
-  constructor(filePath = DEFAULT_FILE) {
-    this.filePath = filePath;
-  }
-
-  // Auxiliar: abre el archivo y lo convierte de texto a lista de objetos
-  async _read() {
-    const content = await fs.readFile(this.filePath, 'utf-8');
-    return JSON.parse(content);
-  }
-
-  // Auxiliar: guarda la lista completa en el archivo (con sangría de 2 espacios para que se lea bien)
-  async _write(services) {
-    await fs.writeFile(this.filePath, JSON.stringify(services, null, 2));
-  }
-
-  // Devuelve todos los servicios, tal cual están guardados
+  // Devuelve todos los servicios. lean() devuelve objetos simples de JavaScript.
   async getAll() {
-    return await this._read();
+    return await ServiceModel.find().lean();
   }
 
   // Devuelve el servicio con ese id, o null si no existe.
-  // Number(id) hace que funcione tanto con 2 como con "2" (de la URL llega texto).
   async getById(id) {
-    const services = await this._read();
-    const service = services.find((s) => s.id === Number(id));
-    return service ?? null; // find devuelve undefined si no encuentra; lo pasamos a null
+    // Un id que no tiene forma de ObjectId (por ejemplo "abc") haría que Mongoose
+    // lance un error. Lo tratamos como "no existe" para seguir respondiendo 404.
+    if (!mongoose.isValidObjectId(id)) return null;
+
+    const service = await ServiceModel.findById(id).lean();
+    return service ?? null;
   }
 
   // Guarda un servicio nuevo y devuelve el servicio creado.
-  // Generar el id es un detalle de CÓMO se guarda,
-  // por eso vive acá y no en el service.
+  // El _id lo genera MongoDB: ya no hay que calcular el "mayor + 1".
   async create(data) {
-    const services = await this._read();
-
-    // Id nuevo = el mayor id existente + 1 (o 1 si la lista está vacía)
-    const nextId = services.length > 0 ? Math.max(...services.map((s) => s.id)) + 1 : 1;
-
-    // Ponemos el id primero y después los datos, para que el id quede arriba en el JSON.
-    // No filtramos campos acá: el service es quien se asegura de pasar solo los permitidos.
-    const newService = { id: nextId, ...data };
-
-    services.push(newService);
-    await this._write(services);
-    return newService;
+    const created = await ServiceModel.create(data);
+    return created.toObject(); // de documento de Mongoose a objeto simple
   }
 
-  // Actualiza un servicio y devuelve el servicio actualizado, o null si no existe.
-  // Mezcla lo viejo con lo nuevo. La regla "el id no se puede modificar" la aplica
-  // el service (quita el id de los datos antes de llamar acá), no el DAO.
+  // Actualiza un servicio y devuelve el actualizado, o null si no existe.
   async update(id, data) {
-    const services = await this._read();
-    const index = services.findIndex((s) => s.id === Number(id));
+    if (!mongoose.isValidObjectId(id)) return null;
 
-    if (index === -1) return null; // no existe
+    try {
+      const updated = await ServiceModel.findByIdAndUpdate(id, data, {
+        new: true,
+        runValidators: true,
+      }).lean();
 
-    services[index] = { ...services[index], ...data };
+      return updated ?? null;
+    } catch (error) {
+      // Mongoose avisa con estos dos tipos de error cuando los datos no cumplen el schema
+      // (un texto donde va un número, un campo obligatorio vacío...).
+      // El DAO es el único que conoce Mongoose, así que acá los traducimos a un error
+      // etiquetado, sin hablar de HTTP: las capas de arriba no necesitan saber qué es un CastError.
+      if (error.name === 'CastError' || error.name === 'ValidationError') {
+        const invalid = new Error(error.message);
+        invalid.code = 'INVALID_DATA';
+        throw invalid;
+      }
 
-    await this._write(services);
-    return services[index];
+      throw error; // cualquier otro error es inesperado: sigue su camino
+    }
   }
 
-  // Elimina un servicio y devuelve el servicio eliminado, o null si no existe.
-  // "delete" es palabra reservada, pero como nombre de método se puede usar sin problema.
+  // Elimina un servicio y devuelve el eliminado, o null si no existe.
   async delete(id) {
-    const services = await this._read();
-    const index = services.findIndex((s) => s.id === Number(id));
+    if (!mongoose.isValidObjectId(id)) return null;
 
-    if (index === -1) return null; // no existe
-
-    const [deleted] = services.splice(index, 1); // saca 1 elemento y lo devuelve
-    await this._write(services);
-    return deleted;
+    const deleted = await ServiceModel.findByIdAndDelete(id).lean();
+    return deleted ?? null;
   }
 }
 

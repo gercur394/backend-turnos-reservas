@@ -34,16 +34,27 @@ export const createService = async (req, res) => {
 };
 
 
-//PUT /api/services/:sid   
+//PUT /api/services/:sid
 export const updateService = async (req, res) => {
-  const { sid } = req.params; 
-  const updated = await servicesService.updateService(sid, req.body);
+  const { sid } = req.params;
 
-  if (!updated) {
-    return res.status(404).json({ error: `Servicio con id ${sid} no encontrado` });
+  try {
+    const updated = await servicesService.updateService(sid, req.body);
+
+    if (!updated) {
+      return res.status(404).json({ error: `Servicio con id ${sid} no encontrado` });
+    }
+
+    res.status(200).json(updated);
+  } catch (error) {
+    // Datos inválidos: el cliente se equivocó, no el servidor -> 400
+    if (error.code === 'INVALID_DATA') {
+      return res.status(400).json({ error: error.message });
+    }
+
+    // Cualquier otro error es inesperado: lo dejamos pasar para que Express responda 500
+    throw error;
   }
-
-  res.status(200).json(updated);
 };
 
 

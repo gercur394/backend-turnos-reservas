@@ -4,7 +4,7 @@ import 'dotenv/config';
 
 // Lista de variables que la app necesita para arrancar.
 // Si mañana sumás otra (por ejemplo DB_URL), solo la agregás acá.
-const REQUIRED_VARS = ['PORT', 'NODE_ENV'];
+const REQUIRED_VARS = ['PORT', 'NODE_ENV', 'MONGO_URI'];
 
 // Recorremos la lista y nos quedamos solo con las que NO tienen valor.
 // "!process.env[name]" es verdadero si la variable no existe o está vacía.
@@ -22,6 +22,7 @@ if (missing.length > 0) {
 const config = {
   port: Number(process.env.PORT), // process.env siempre da texto, lo pasamos a número
   nodeEnv: process.env.NODE_ENV,
+  mongoUri: process.env.MONGO_URI,
 };
 
 export default config;
